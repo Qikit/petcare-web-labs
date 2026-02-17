@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+venv/
+env/
+media/
+staticfiles/
+*.mo
+.idea/
+.vscode/
+.claude/
+node_modules/
