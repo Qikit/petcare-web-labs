@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load petcare_tags %}
+
+{% block title %}{{ doctor.user.get_full_name }} — PetCare{% endblock %}
+
+{% block content %}
+<section class="hero hero-green">
+    <div class="hero-content">
+        <h1>{{ doctor.user.get_full_name }}</h1>
+        <p>Ветеринарный врач</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="doctor-info">
+        <div class="doctor-photo">
+            {% if doctor.photo %}
+                <img src="{{ doctor.photo.url }}" alt="{{ doctor }}">
+            {% endif %}
+        </div>
+        <div class="doctor-details">
+            <div class="doctor-stats">
+                <div class="stat">
+                    <span class="stat-val">{{ doctor.experience_years }}</span>
+                    <span class="stat-label">лет стажа</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-val">{{ stats.avg_rating|floatformat:1|default:"—" }}</span>
+                    <span class="stat-label">рейтинг</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-val">{{ stats.total }}</span>
+                    <span class="stat-label">отзывов</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-val">{{ doctor.consultation_price|floatformat:0 }}</span>
+                    <span class="stat-label">руб.</span>
+                </div>
+            </div>
+
+            {% if doctor.education %}
+                <h3>Образование</h3>
+                <p>{{ doctor.education }}</p>
+            {% endif %}
+
+            {% if doctor.bio %}
+                <h3>О враче</h3>
+                <p>{{ doctor.bio }}</p>
+            {% endif %}
+
+            <h3>Специализации</h3>
+            <div class="tags">
+                {% for spec in doctor.specialties.all %}
+                    <span class="tag">{{ spec.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if doctor.schedules.all %}
+<section class="section">
+    <h2 class="section-title">Расписание</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>День</th>
+                <th>Начало</th>
+                <th>Конец</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for schedule in doctor.schedules.all %}
+            <tr>
+                <td>{{ schedule.get_day_of_week_display }}</td>
+                <td>{{ schedule.start_time|date:"H:i" }}</td>
+                <td>{{ schedule.end_time|date:"H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+{% if services %}
+<section class="section">
+    <h2 class="section-title">Услуги</h2>
+    <div class="cards-grid">
+        {% for service in services %}
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">{{ service.name }}</h3>
+                <p class="card-text">{{ service.description|truncatewords:15 }}</p>
+                <p class="card-price">{{ service.price|floatformat:0 }} руб.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if reviews %}
+<section class="section">
+    <h2 class="section-title">Отзывы</h2>
+    <div class="cards-grid">
+        {% for review in reviews %}
+        <div class="card">
+            <div class="card-body">
+                <div class="review-header">
+                    <strong>{{ review.author }}</strong>
+                    <span class="rating">{{ review.rating }}/5</span>
+                </div>
+                <p class="card-text">{{ review.text }}</p>
+                <small>{{ review.created_at|date:"d E Y" }}</small>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if user.is_authenticated %}
+<div style="text-align:center;margin:30px 0;">
+    <a href="{% url 'appointment-create' %}?doctor={{ doctor.pk }}" class="btn btn-primary">Записаться к врачу</a>
+    <a href="{% url 'review-create' doctor_pk=doctor.pk %}" class="btn btn-outline">Оставить отзыв</a>
+</div>
+{% endif %}
+{% endblock %}

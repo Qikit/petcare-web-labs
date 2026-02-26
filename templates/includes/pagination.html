@@ -1,0 +1,15 @@
+{% if page_obj.has_other_pages %}
+<nav class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.specialty %}&specialty={{ request.GET.specialty }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="btn btn-outline btn-sm">&laquo; Назад</a>
+    {% endif %}
+
+    <span class="pagination-info">
+        Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.specialty %}&specialty={{ request.GET.specialty }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="btn btn-outline btn-sm">Далее &raquo;</a>
+    {% endif %}
+</nav>
+{% endif %}

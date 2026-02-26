@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load petcare_tags %}
+
+{% block title %}Врачи — PetCare{% endblock %}
+
+{% block content %}
+<section class="hero hero-navy">
+    <div class="hero-content">
+        <h1>Наши врачи</h1>
+        <p>Опытные ветеринарные специалисты</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="layout-sidebar">
+        <aside class="sidebar">
+            <div class="search-bar">
+                <form method="get">
+                    <input type="text" name="search" value="{{ search }}" placeholder="Поиск по имени..." class="form-control">
+                    <button type="submit" class="btn btn-primary btn-sm">Найти</button>
+                </form>
+            </div>
+
+            <div class="specialties-box">
+                <h3>Специализации</h3>
+                <a href="{% url 'doctor-list' %}" class="nav-link {% if not request.GET.specialty %}active{% endif %}">Все</a>
+                {% for spec in specialties %}
+                    <a href="?specialty={{ spec.pk }}{% if search %}&search={{ search }}{% endif %}"
+                       class="nav-link {% if request.GET.specialty == spec.pk|stringformat:'d' %}active{% endif %}">
+                        {{ spec.name }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <div class="specialties-box">
+                <h3>Сортировка</h3>
+                <a href="?sort=experience{% if search %}&search={{ search }}{% endif %}" class="nav-link {% if current_sort == 'experience' %}active{% endif %}">По стажу</a>
+                <a href="?sort=rating{% if search %}&search={{ search }}{% endif %}" class="nav-link {% if current_sort == 'rating' %}active{% endif %}">По рейтингу</a>
+                <a href="?sort=price{% if search %}&search={{ search }}{% endif %}" class="nav-link {% if current_sort == 'price' %}active{% endif %}">По цене</a>
+            </div>
+        </aside>
+
+        <div class="content-main">
+            <div class="cards-grid">
+                {% for doctor in page_obj %}
+                <div class="card">
+                    {% if doctor.photo %}
+                        <img src="{{ doctor.photo.url }}" alt="{{ doctor }}" class="card-img">
+                    {% endif %}
+                    <div class="card-body">
+                        <h3 class="card-title">{{ doctor.user.get_full_name }}</h3>
+                        <p class="card-text">Стаж: {{ doctor.experience_years }} лет</p>
+                        {% if doctor.avg_rating %}
+                            <p class="card-text">Рейтинг: {{ doctor.avg_rating|floatformat:1 }} ({{ doctor.reviews_count }} отзывов)</p>
+                        {% endif %}
+                        <p class="card-price">{{ doctor.consultation_price|floatformat:0 }} руб.</p>
+                        <a href="{{ doctor.get_absolute_url }}" class="btn btn-outline btn-sm">Подробнее</a>
+                    </div>
+                </div>
+                {% empty %}
+                <p>Врачи не найдены.</p>
+                {% endfor %}
+            </div>
+
+            {% include 'includes/pagination.html' %}
+        </div>
+    </div>
+</section>
+{% endblock %}
