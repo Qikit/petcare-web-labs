@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Услуги — PetCare{% endblock %}
+
+{% block content %}
+<section class="hero hero-orange">
+    <div class="hero-content">
+        <h1>Наши услуги</h1>
+        <p>Полный спектр ветеринарных услуг</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="layout-sidebar">
+        <aside class="sidebar">
+            <div class="search-bar">
+                <form method="get">
+                    <input type="text" name="search" value="{{ search }}" placeholder="Поиск услуги..." class="form-control">
+                    <button type="submit" class="btn btn-primary btn-sm">Найти</button>
+                </form>
+            </div>
+            <div class="specialties-box">
+                <h3>Категории</h3>
+                <a href="{% url 'service-list' %}" class="nav-link {% if not request.GET.specialty %}active{% endif %}">Все</a>
+                {% for spec in specialties %}
+                    <a href="?specialty={{ spec.pk }}" class="nav-link {% if request.GET.specialty == spec.pk|stringformat:'d' %}active{% endif %}">{{ spec.name }}</a>
+                {% endfor %}
+            </div>
+        </aside>
+
+        <div class="content-main">
+            <div class="cards-grid">
+                {% for service in page_obj %}
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ service.name }}</h3>
+                        <p class="card-text">{{ service.description|default:"Описание скоро появится"|truncatewords:20 }}</p>
+                        <p class="card-meta">{{ service.duration_minutes }} мин.</p>
+                        <p class="card-price">{{ service.price|floatformat:0 }} руб.</p>
+                        {% if service.specialty %}
+                            <span class="tag">{{ service.specialty.name }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p>Услуги не найдены.</p>
+                {% endfor %}
+            </div>
+
+            {% include 'includes/pagination.html' %}
+        </div>
+    </div>
+</section>
+{% endblock %}
