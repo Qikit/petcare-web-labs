@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Профиль — PetCare{% endblock %}
+
+{% block content %}
+<section class="hero hero-navy">
+    <div class="hero-content">
+        <h1>Личный кабинет</h1>
+        <p>{{ user.get_full_name|default:user.email }}</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="profile-grid">
+        <aside class="profile-sidebar">
+            {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="Аватар" class="profile-avatar">
+            {% endif %}
+            <h3>{{ user.get_full_name|default:"Пользователь" }}</h3>
+            <p>{{ user.email }}</p>
+            {% if user.phone %}<p>{{ user.phone }}</p>{% endif %}
+            <a href="{% url 'profile-edit' %}" class="btn btn-outline btn-sm">Редактировать</a>
+        </aside>
+
+        <div class="profile-content">
+            <h2>Мои записи</h2>
+            {% if appointments %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Врач</th>
+                        <th>Питомец</th>
+                        <th>Услуга</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for apt in appointments %}
+                    <tr>
+                        <td>{{ apt.date|date:"d.m.Y" }} {{ apt.time_slot|date:"H:i" }}</td>
+                        <td>{{ apt.doctor.user.get_full_name }}</td>
+                        <td>{{ apt.pet.name }}</td>
+                        <td>{{ apt.service.name }}</td>
+                        <td><span class="status-badge status-{{ apt.status }}">{{ apt.get_status_display }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>У вас пока нет записей. <a href="{% url 'appointment-create' %}">Записаться на приём</a></p>
+            {% endif %}
+
+            <h2 style="margin-top:30px;">Мои питомцы</h2>
+            {% if pets %}
+            <div class="cards-grid">
+                {% for pet in pets %}
+                <div class="card">
+                    {% if pet.photo %}
+                        <img src="{{ pet.photo.url }}" alt="{{ pet.name }}" class="card-img">
+                    {% endif %}
+                    <div class="card-body">
+                        <h3 class="card-title">{{ pet.name }}</h3>
+                        <p class="card-text">{{ pet.get_species_display }}, {{ pet.breed|default:"порода не указана" }}</p>
+                        <p class="card-text">Возраст: {{ pet.age }} мес.</p>
+                        <div class="card-actions">
+                            <a href="{% url 'pet-edit' pet.pk %}" class="btn btn-outline btn-sm">Редактировать</a>
+                            <a href="{% url 'pet-delete' pet.pk %}" class="btn btn-ghost btn-sm">Удалить</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <a href="{% url 'pet-create' %}" class="btn btn-primary" style="margin-top:16px;">Добавить питомца</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

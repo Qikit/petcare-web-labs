@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Редактирование профиля — PetCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="form-section">
+        <h2>Редактирование профиля</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="field-error">{{ field.errors.0 }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div class="form-row">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <a href="{% url 'profile' %}" class="btn btn-outline">Отмена</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
