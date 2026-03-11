@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои питомцы — PetCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <h2 class="section-title">Мои питомцы</h2>
+    <div class="cards-grid">
+        {% for pet in pets %}
+        <div class="card">
+            {% if pet.photo %}
+                <img src="{{ pet.photo.url }}" alt="{{ pet.name }}" class="card-img">
+            {% endif %}
+            <div class="card-body">
+                <h3 class="card-title">{{ pet.name }}</h3>
+                <p class="card-text">{{ pet.get_species_display }}, {{ pet.breed }}</p>
+                <p class="card-text">Возраст: {{ pet.age }} мес. {% if pet.weight %}| Вес: {{ pet.weight }} кг{% endif %}</p>
+                {% if pet.health_notes %}
+                    <p class="card-text"><small>{{ pet.health_notes|truncatewords:10 }}</small></p>
+                {% endif %}
+                <div class="card-actions">
+                    <a href="{% url 'pet-edit' pet.pk %}" class="btn btn-outline btn-sm">Редактировать</a>
+                    <a href="{% url 'pet-delete' pet.pk %}" class="btn btn-ghost btn-sm">Удалить</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>У вас пока нет питомцев.</p>
+        {% endfor %}
+    </div>
+    <a href="{% url 'pet-create' %}" class="btn btn-primary" style="margin-top:20px;">Добавить питомца</a>
+</section>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} — PetCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="form-section">
+        <h2>{{ title }}</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="field-error">{{ field.errors.0 }}</div>
+                {% endif %}
+                {% if field.help_text %}
+                    <small class="help-text">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div class="form-row">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <a href="{% url 'pet-list' %}" class="btn btn-outline">Отмена</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

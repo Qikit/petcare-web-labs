@@ -1,3 +1,9 @@
 from django.urls import path
+from . import views
 
-urlpatterns = []
+urlpatterns = [
+    path('', views.pet_list, name='pet-list'),
+    path('add/', views.pet_create, name='pet-create'),
+    path('<int:pk>/edit/', views.pet_edit, name='pet-edit'),
+    path('<int:pk>/delete/', views.pet_delete, name='pet-delete'),
+]
