@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Записаться на приём — PetCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="form-section">
+        <h2>Записаться на приём</h2>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="field-error">{{ field.errors.0 }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Записаться</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
