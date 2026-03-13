@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Оставить отзыв — PetCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="form-section">
+        <h2>Отзыв о враче {{ doctor.user.get_full_name }}</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                {{ field.errors }}
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="help-text">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div class="form-row">
+                <button type="submit" class="btn btn-primary">Отправить отзыв</button>
+                <a href="{% url 'doctor-detail' pk=doctor.pk %}" class="btn btn-outline">Отмена</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
