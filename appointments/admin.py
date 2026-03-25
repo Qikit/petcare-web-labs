@@ -24,6 +24,40 @@ class AppointmentAdmin(admin.ModelAdmin):
     def show_is_upcoming(self, obj):
         return obj.is_upcoming()
 
+    @admin.action(description='Экспортировать в PDF')
+    def export_pdf(self, request, queryset):
+        import io
+        from django.http import HttpResponse
+        from reportlab.lib.pagesizes import A4
+        from reportlab.pdfgen import canvas
+
+        buf = io.BytesIO()
+        p = canvas.Canvas(buf, pagesize=A4)
+        width, height = A4
+        y = height - 50
+
+        p.setFont('Helvetica-Bold', 16)
+        p.drawString(50, y, 'PetCare - Appointments Export')
+        y -= 40
+
+        p.setFont('Helvetica', 10)
+        for apt in queryset:
+            if y < 50:
+                p.showPage()
+                y = height - 50
+            p.drawString(50, y, f'{apt.date} | {apt.client} | {apt.doctor} | {apt.service} | {apt.get_status_display()}')
+            y -= 18
+
+        p.showPage()
+        p.save()
+        buf.seek(0)
+
+        response = HttpResponse(buf, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="appointments.pdf"'
+        return response
+
+    actions = ['export_pdf']
+
 
 @admin.register(MedicalRecord)
 class MedicalRecordAdmin(admin.ModelAdmin):
