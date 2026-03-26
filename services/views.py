@@ -1,10 +1,12 @@
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.views.decorators.cache import cache_page
 
 from .models import Service
 from doctors.models import Specialty
 
 
+@cache_page(60 * 15)
 def service_list(request):
     services = Service.objects.filter(
         is_active=True

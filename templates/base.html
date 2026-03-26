@@ -1,10 +1,10 @@
-{% load static %}
+{% load static %}{% load i18n %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}PetCare{% endblock %}</title>
+    <title>{% block title %}{% trans "PetCare — Ветеринарная клиника" %}{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
@@ -15,20 +15,20 @@
                 <img src="{% static 'img/logo.svg' %}" alt="PetCare">
             </a>
             <nav class="nav">
-                <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">Главная</a>
-                <a href="{% url 'doctor-list' %}" class="nav-link {% if '/doctors/' in request.path %}active{% endif %}">Врачи</a>
-                <a href="{% url 'service-list' %}" class="nav-link {% if '/services/' in request.path %}active{% endif %}">Услуги</a>
+                <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">{% trans "Главная" %}</a>
+                <a href="{% url 'doctor-list' %}" class="nav-link {% if '/doctors/' in request.path %}active{% endif %}">{% trans "Врачи" %}</a>
+                <a href="{% url 'service-list' %}" class="nav-link {% if '/services/' in request.path %}active{% endif %}">{% trans "Услуги" %}</a>
                 {% if user.is_authenticated %}
-                    <a href="{% url 'appointment-create' %}" class="nav-link">Записаться</a>
+                    <a href="{% url 'appointment-create' %}" class="nav-link">{% trans "Записаться" %}</a>
                 {% endif %}
             </nav>
             <div class="header-actions">
                 {% if user.is_authenticated %}
                     <a href="{% url 'profile' %}" class="btn btn-outline-light btn-sm">{{ user.first_name|default:user.email }}</a>
-                    <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm">Выйти</a>
+                    <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm">{% trans "Выйти" %}</a>
                 {% else %}
-                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Войти</a>
-                    <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Регистрация</a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">{% trans "Войти" %}</a>
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-sm">{% trans "Регистрация" %}</a>
                 {% endif %}
             </div>
             <button class="burger" id="burger">

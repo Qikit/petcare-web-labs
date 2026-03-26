@@ -1,0 +1,29 @@
+# PetCare English translations
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "PetCare — Ветеринарная клиника"
+msgstr "PetCare — Veterinary Clinic"
+
+msgid "Главная"
+msgstr "Home"
+
+msgid "Врачи"
+msgstr "Doctors"
+
+msgid "Услуги"
+msgstr "Services"
+
+msgid "Войти"
+msgstr "Login"
+
+msgid "Регистрация"
+msgstr "Register"
+
+msgid "Выйти"
+msgstr "Logout"
+
+msgid "Записаться"
+msgstr "Book Appointment"
