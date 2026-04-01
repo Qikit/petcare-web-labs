@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Поиск врачей — PetCare{% endblock %}
+
+{% block content %}
+<section class="hero hero-navy">
+    <div class="hero-content">
+        <h1>Поиск врачей</h1>
+    </div>
+</section>
+
+<section class="section">
+    <div class="form-section">
+        <form method="get">
+            <div class="form-row">
+                <input type="text" name="q" value="{{ query }}" placeholder="Поиск по фамилии..." class="form-control">
+                <button type="submit" class="btn btn-primary">Найти</button>
+            </div>
+        </form>
+    </div>
+
+    {% if query %}
+    <div style="margin-top:20px;">
+        <h3>Результаты поиска: "{{ query }}"</h3>
+        <p>Найдено (icontains): {{ results.count }} врачей</p>
+        <p>Найдено (contains): {{ exact_count }} врачей</p>
+        <p>Всего доступных врачей: {{ total }}</p>
+        <p>Есть ли врачи: {{ has_doctors|yesno:"Да,Нет" }}</p>
+
+        {% if results %}
+        <h3>Совпадения</h3>
+        <div class="cards-grid">
+            {% for doctor in results %}
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">{{ doctor.user.get_full_name }}</h3>
+                    <p class="card-text">Стаж: {{ doctor.experience_years }} лет</p>
+                    <a href="{{ doctor.get_absolute_url }}" class="btn btn-outline btn-sm">Подробнее</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if top_3 %}
+        <h3 style="margin-top:20px;">Топ-3 врача (Limiting QuerySets)</h3>
+        <ul>
+            {% for doctor in top_3 %}
+            <li>{{ doctor.user.get_full_name }} — {{ doctor.experience_years }} лет стажа</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if doctor_names %}
+        <h3 style="margin-top:20px;">Имена врачей (values)</h3>
+        <ul>
+            {% for item in doctor_names %}
+            <li>{{ item.user__first_name }} {{ item.user__last_name }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if expensive_services %}
+        <h3 style="margin-top:20px;">Дорогие услуги (F expressions: price > duration * 50)</h3>
+        <ul>
+            {% for svc in expensive_services %}
+            <li>{{ svc.name }} — {{ svc.price }} руб. ({{ svc.duration_minutes }} мин.)</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, F
 from django.utils import timezone
 
 from .models import Doctor, Specialty
@@ -82,3 +82,44 @@ def doctor_detail(request, pk):
         'reviews': reviews,
         'services': doctor_services,
     })
+
+
+def doctor_search(request):
+    query = request.GET.get('q', '')
+    results = Doctor.objects.none()
+    context = {'query': query, 'results': results}
+
+    if query:
+        results = Doctor.objects.filter(
+            is_available=True
+        ).filter(
+            user__last_name__icontains=query
+        )
+
+        exact = Doctor.objects.filter(user__last_name__contains=query)
+
+        top_3 = Doctor.objects.all()[:3]
+
+        doctor_names = Doctor.objects.values('user__first_name', 'user__last_name')[:5]
+        doctor_emails = list(Doctor.objects.values_list('user__email', flat=True)[:5])
+
+        total = Doctor.objects.filter(is_available=True).count()
+        has_doctors = Doctor.objects.filter(is_available=True).exists()
+
+        from services.models import Service
+        expensive_services = Service.objects.filter(
+            price__gt=F('duration_minutes') * 50
+        )
+
+        context.update({
+            'results': results,
+            'exact_count': exact.count(),
+            'top_3': top_3,
+            'doctor_names': doctor_names,
+            'doctor_emails': doctor_emails,
+            'total': total,
+            'has_doctors': has_doctors,
+            'expensive_services': expensive_services,
+        })
+
+    return render(request, 'doctors/search.html', context)
