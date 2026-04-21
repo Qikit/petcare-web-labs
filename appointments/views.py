@@ -47,48 +47,53 @@ def appointment_cancel(request, pk):
 
 @login_required
 def medical_record_pdf(request, pk):
-    record = get_object_or_404(MedicalRecord, pk=pk)
+    record = get_object_or_404(
+        MedicalRecord.objects.select_related('pet', 'doctor__user'),
+        pk=pk,
+        pet__owner=request.user,
+    )
 
     from reportlab.lib.pagesizes import A4
     from reportlab.pdfgen import canvas
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
+    from .pdf_utils import register_fonts
+
+    font_regular, font_bold = register_fonts()
 
     buf = io.BytesIO()
     p = canvas.Canvas(buf, pagesize=A4)
     width, height = A4
 
-    p.setFont('Helvetica-Bold', 18)
+    p.setFont(font_bold, 18)
     p.drawString(50, height - 50, 'PetCare')
 
-    p.setFont('Helvetica', 12)
-    p.drawString(50, height - 80, f'Medical Record #{record.pk}')
-    p.drawString(50, height - 110, f'Date: {record.created_at.strftime("%d.%m.%Y")}')
+    p.setFont(font_regular, 12)
+    p.drawString(50, height - 80, f'Медицинская карта №{record.pk}')
+    p.drawString(50, height - 110, f'Дата: {record.created_at.strftime("%d.%m.%Y")}')
 
-    p.drawString(50, height - 150, f'Pet: {record.pet.name} ({record.pet.get_species_display()})')
-    p.drawString(50, height - 170, f'Doctor: {record.doctor.user.get_full_name()}')
+    p.drawString(50, height - 150, f'Питомец: {record.pet.name} ({record.pet.get_species_display()})')
+    p.drawString(50, height - 170, f'Врач: {record.doctor.user.get_full_name()}')
 
-    p.setFont('Helvetica-Bold', 12)
-    p.drawString(50, height - 210, 'Diagnosis:')
-    p.setFont('Helvetica', 11)
+    p.setFont(font_bold, 12)
+    p.drawString(50, height - 210, 'Диагноз:')
+    p.setFont(font_regular, 11)
     y = height - 230
     for line in record.diagnosis.split('\n'):
         p.drawString(70, y, line[:80])
         y -= 18
 
     if record.treatment:
-        p.setFont('Helvetica-Bold', 12)
-        p.drawString(50, y - 10, 'Treatment:')
-        p.setFont('Helvetica', 11)
+        p.setFont(font_bold, 12)
+        p.drawString(50, y - 10, 'Лечение:')
+        p.setFont(font_regular, 11)
         y -= 30
         for line in record.treatment.split('\n'):
             p.drawString(70, y, line[:80])
             y -= 18
 
     if record.recommendations:
-        p.setFont('Helvetica-Bold', 12)
-        p.drawString(50, y - 10, 'Recommendations:')
-        p.setFont('Helvetica', 11)
+        p.setFont(font_bold, 12)
+        p.drawString(50, y - 10, 'Рекомендации:')
+        p.setFont(font_regular, 11)
         y -= 30
         for line in record.recommendations.split('\n'):
             p.drawString(70, y, line[:80])
