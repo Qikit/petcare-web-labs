@@ -1,4 +1,5 @@
 from django import forms
+
 from .models import Pet
 
 
@@ -27,15 +28,7 @@ class PetForm(forms.ModelForm):
         }
 
     def clean_name(self):
-        name = self.cleaned_data['name']
+        name = self.cleaned_data['name'].strip()
         if len(name) < 2:
             raise forms.ValidationError('Кличка должна содержать минимум 2 символа')
-        return name.strip().title()
-
-    def save(self, commit=True):
-        pet = super().save(commit=False)
-        if not pet.breed:
-            pet.breed = 'Не указана'
-        if commit:
-            pet.save()
-        return pet
+        return name

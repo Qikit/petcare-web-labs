@@ -36,7 +36,6 @@ class Doctor(models.Model):
         'фото', upload_to='doctors/', blank=True, null=True,
         validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])],
     )
-    photo_url = models.URLField('ссылка на фото', blank=True)
     consultation_price = models.DecimalField(
         'цена консультации', max_digits=10, decimal_places=2, default=0
     )
@@ -53,11 +52,6 @@ class Doctor(models.Model):
 
     def get_absolute_url(self):
         return reverse('doctor-detail', kwargs={'pk': self.pk})
-
-    def get_rating(self):
-        from django.db.models import Avg
-        result = self.reviews.aggregate(avg=Avg('rating'))
-        return result['avg'] or 0
 
 
 class DoctorSpecialty(models.Model):
