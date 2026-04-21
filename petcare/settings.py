@@ -26,8 +26,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'debug_toolbar',
-
     'users.apps.UsersConfig',
     'doctors.apps.DoctorsConfig',
     'pets.apps.PetsConfig',
@@ -36,8 +34,10 @@ INSTALLED_APPS = [
     'reviews.apps.ReviewsConfig',
 ]
 
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+
 MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -47,6 +47,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if DEBUG:
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'petcare.urls'
 
