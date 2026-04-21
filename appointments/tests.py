@@ -202,3 +202,39 @@ class AppointmentFormScheduleTest(TestCase):
     def test_form_accepts_valid_slot(self):
         form = self._form()
         self.assertTrue(form.is_valid(), form.errors)
+
+
+class AppointmentModelTest(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(email='o@test.ru', password='pwd12345')
+        vet_user = User.objects.create_user(
+            email='v@test.ru', password='pwd12345', role=User.Role.VETERINARIAN,
+        )
+        self.doctor = Doctor.objects.create(user=vet_user, consultation_price=Decimal('1000'))
+        self.pet = Pet.objects.create(owner=self.owner, name='A', species='cat', age=12)
+        self.service = Service.objects.create(name='S', price=Decimal('1000'), duration_minutes=30)
+
+    def _make(self, status, offset_days=1, slot_hour=10):
+        return Appointment.objects.create(
+            client=self.owner, doctor=self.doctor, pet=self.pet, service=self.service,
+            date=date.today() + timedelta(days=offset_days),
+            time_slot=time(slot_hour, 0), status=status,
+        )
+
+    def test_can_cancel_pending(self):
+        self.assertTrue(self._make(Appointment.Status.PENDING).can_cancel())
+
+    def test_can_cancel_confirmed(self):
+        self.assertTrue(self._make(Appointment.Status.CONFIRMED, slot_hour=11).can_cancel())
+
+    def test_cannot_cancel_completed(self):
+        self.assertFalse(self._make(Appointment.Status.COMPLETED, offset_days=-1).can_cancel())
+
+    def test_is_upcoming_for_future_pending(self):
+        self.assertTrue(self._make(Appointment.Status.PENDING, offset_days=5, slot_hour=12).is_upcoming())
+
+    def test_not_upcoming_if_cancelled(self):
+        self.assertFalse(self._make(Appointment.Status.CANCELLED, offset_days=5, slot_hour=13).is_upcoming())
+
+    def test_not_upcoming_if_past(self):
+        self.assertFalse(self._make(Appointment.Status.CONFIRMED, offset_days=-3, slot_hour=14).is_upcoming())
