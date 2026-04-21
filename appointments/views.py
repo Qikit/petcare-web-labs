@@ -1,11 +1,15 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.http import HttpResponse
-
-from .models import Appointment, MedicalRecord
-from .forms import AppointmentForm
 import io
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+
+from .forms import AppointmentForm
+from .models import Appointment, MedicalRecord
+from .pdf_utils import register_fonts
 
 
 @login_required
@@ -52,10 +56,6 @@ def medical_record_pdf(request, pk):
         pk=pk,
         pet__owner=request.user,
     )
-
-    from reportlab.lib.pagesizes import A4
-    from reportlab.pdfgen import canvas
-    from .pdf_utils import register_fonts
 
     font_regular, font_bold = register_fonts()
 
