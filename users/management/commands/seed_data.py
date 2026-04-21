@@ -340,4 +340,33 @@ class Command(BaseCommand):
 
         self.stdout.write(f'  + Отзывы: {review_count}')
 
+        # ── Медкарты (для completed-приёмов) ─────────────────────────
+        medical_records_data = [
+            (completed[0], 'Гастрит лёгкой степени', 'Диетический корм, Смекта 2 раза в день 5 дней', 'Повторный приём через 10 дней'),
+            (completed[1], 'Состояние после кастрации', 'Обработка шва хлоргексидином 2 р/д, 7 дней', 'Носить воротник 10 дней, снять швы через неделю'),
+            (completed[2], 'Плановая вакцинация выполнена', 'Вакцина Нобивак DHPPi + RL', 'Следующая вакцинация через 12 месяцев'),
+            (completed[3], 'Конъюнктивит (катаральный)', 'Капли Ципровет 3 р/д, 7 дней', 'Контрольный осмотр через неделю'),
+            (completed[4], 'Атопический дерматит', 'Апоквел 1 таб/д, шампунь Дуксо', 'Элиминационная диета, повторно через 3 недели'),
+            (completed[5], 'Санация полости рта проведена', 'Ультразвуковая чистка, полировка', 'Чистка зубов раз в 6-12 мес.'),
+            (completed[6], 'Синусовая тахикардия, ЭКГ без патологий', 'Наблюдение', 'Контрольное ЭКГ через 6 месяцев'),
+        ]
+
+        mr_count = 0
+        for apt, diagnosis, treatment, recommendations in medical_records_data:
+            _, created = MedicalRecord.objects.get_or_create(
+                appointment=apt,
+                defaults={
+                    'pet': apt.pet,
+                    'doctor': apt.doctor,
+                    'date': apt.date,
+                    'diagnosis': diagnosis,
+                    'treatment': treatment,
+                    'recommendations': recommendations,
+                },
+            )
+            if created:
+                mr_count += 1
+
+        self.stdout.write(f'  + Медкарты: {mr_count}')
+
         self.stdout.write(self.style.SUCCESS('Готово!'))
