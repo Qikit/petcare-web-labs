@@ -68,7 +68,7 @@ def medical_record_pdf(request, pk):
 
     p.setFont(font_regular, 12)
     p.drawString(50, height - 80, f'Медицинская карта №{record.pk}')
-    p.drawString(50, height - 110, f'Дата: {record.created_at.strftime("%d.%m.%Y")}')
+    p.drawString(50, height - 110, f'Дата: {record.date.strftime("%d.%m.%Y")}')
 
     p.drawString(50, height - 150, f'Питомец: {record.pet.name} ({record.pet.get_species_display()})')
     p.drawString(50, height - 170, f'Врач: {record.doctor.user.get_full_name()}')
