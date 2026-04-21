@@ -1,6 +1,7 @@
 from django import forms
 from django.utils import timezone
 
+from doctors.models import Schedule
 from .models import Appointment
 
 
@@ -17,13 +18,46 @@ class AppointmentForm(forms.ModelForm):
             'service': forms.Select(attrs={'class': 'form-control'}),
         }
 
-    def __init__(self, user=None, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if user:
+        if user is not None:
             self.fields['pet'].queryset = user.pets.all()
 
     def clean_date(self):
-        date = self.cleaned_data['date']
-        if date < timezone.now().date():
+        date_value = self.cleaned_data['date']
+        if date_value < timezone.now().date():
             raise forms.ValidationError('Нельзя записаться на прошедшую дату')
-        return date
+        return date_value
+
+    def clean(self):
+        cleaned = super().clean()
+        doctor = cleaned.get('doctor')
+        date_value = cleaned.get('date')
+        time_slot = cleaned.get('time_slot')
+        if not (doctor and date_value and time_slot):
+            return cleaned
+
+        schedule = Schedule.objects.filter(
+            doctor=doctor, day_of_week=date_value.weekday(),
+        ).first()
+        if schedule is None:
+            raise forms.ValidationError('Врач не работает в выбранный день недели')
+        if not (schedule.start_time <= time_slot < schedule.end_time):
+            raise forms.ValidationError(
+                f'Врач работает с {schedule.start_time:%H:%M} до {schedule.end_time:%H:%M}',
+            )
+
+        conflict = Appointment.objects.filter(
+            doctor=doctor, date=date_value, time_slot=time_slot,
+            status__in=[
+                Appointment.Status.PENDING,
+                Appointment.Status.CONFIRMED,
+                Appointment.Status.IN_PROGRESS,
+            ],
+        )
+        if self.instance.pk:
+            conflict = conflict.exclude(pk=self.instance.pk)
+        if conflict.exists():
+            raise forms.ValidationError('Этот слот уже занят, выберите другое время')
+
+        return cleaned

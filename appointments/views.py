@@ -11,7 +11,7 @@ import io
 @login_required
 def appointment_create(request):
     if request.method == 'POST':
-        form = AppointmentForm(request.user, request.POST)
+        form = AppointmentForm(request.POST, user=request.user)
         if form.is_valid():
             appointment = form.save(commit=False)
             appointment.client = request.user
@@ -19,7 +19,7 @@ def appointment_create(request):
             messages.success(request, 'Запись создана успешно')
             return redirect('appointment-list')
     else:
-        form = AppointmentForm(request.user)
+        form = AppointmentForm(user=request.user)
         doctor_id = request.GET.get('doctor')
         if doctor_id:
             form.fields['doctor'].initial = doctor_id

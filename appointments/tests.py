@@ -155,3 +155,50 @@ class AppointmentSlotUniqueTest(TestCase):
             date=date.today() + timedelta(days=1), time_slot=time(10, 0),
             status=Appointment.Status.CONFIRMED,
         )
+
+
+class AppointmentFormScheduleTest(TestCase):
+    def setUp(self):
+        from doctors.models import Schedule
+        self.owner = User.objects.create_user(email='o@test.ru', password='pwd12345')
+        vet_user = User.objects.create_user(
+            email='v@test.ru', password='pwd12345', role=User.Role.VETERINARIAN,
+        )
+        self.doctor = Doctor.objects.create(user=vet_user, consultation_price=Decimal('1000'))
+        self.pet = Pet.objects.create(owner=self.owner, name='Барсик', species='cat', age=12)
+        self.service = Service.objects.create(name='Осмотр', price=Decimal('1000'), duration_minutes=30)
+        Schedule.objects.create(
+            doctor=self.doctor, day_of_week=0,
+            start_time=time(9, 0), end_time=time(18, 0),
+        )
+
+    def _next_weekday(self, target_weekday):
+        d = date.today() + timedelta(days=1)
+        while d.weekday() != target_weekday:
+            d += timedelta(days=1)
+        return d
+
+    def _form(self, **overrides):
+        from appointments.forms import AppointmentForm
+        data = {
+            'doctor': self.doctor.pk,
+            'pet': self.pet.pk,
+            'service': self.service.pk,
+            'date': self._next_weekday(0),
+            'time_slot': '10:00',
+            'comment': '',
+        }
+        data.update(overrides)
+        return AppointmentForm(data=data, user=self.owner)
+
+    def test_form_rejects_day_without_schedule(self):
+        form = self._form(date=self._next_weekday(6))
+        self.assertFalse(form.is_valid())
+
+    def test_form_rejects_time_outside_schedule(self):
+        form = self._form(time_slot='03:00')
+        self.assertFalse(form.is_valid())
+
+    def test_form_accepts_valid_slot(self):
+        form = self._form()
+        self.assertTrue(form.is_valid(), form.errors)
