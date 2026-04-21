@@ -1,6 +1,7 @@
 from datetime import date, time, timedelta
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
@@ -50,3 +51,107 @@ class MedicalRecordPdfAuthzTest(TestCase):
         self.client.force_login(self.stranger)
         response = self.client.get(reverse('medical-record-pdf', args=[self.record.pk]))
         self.assertEqual(response.status_code, 404)
+
+
+class MedicalRecordValidationTest(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(email='o@test.ru', password='pwd12345')
+        other_owner = User.objects.create_user(email='other@test.ru', password='pwd12345')
+        vet_user = User.objects.create_user(
+            email='v@test.ru', password='pwd12345', role=User.Role.VETERINARIAN,
+        )
+        other_vet = User.objects.create_user(
+            email='ov@test.ru', password='pwd12345', role=User.Role.VETERINARIAN,
+        )
+        specialty = Specialty.objects.create(name='Терапия')
+        self.doctor = Doctor.objects.create(user=vet_user, consultation_price=Decimal('1000'))
+        self.other_doctor = Doctor.objects.create(user=other_vet, consultation_price=Decimal('1000'))
+        self.pet = Pet.objects.create(owner=self.owner, name='Барсик', species='cat', age=24)
+        self.other_pet = Pet.objects.create(owner=other_owner, name='Мурка', species='cat', age=12)
+        self.service = Service.objects.create(name='Осмотр', price=Decimal('1000'), duration_minutes=30)
+        self.completed_apt = Appointment.objects.create(
+            client=self.owner, doctor=self.doctor, pet=self.pet, service=self.service,
+            date=date.today() - timedelta(days=1), time_slot=time(10, 0),
+            status=Appointment.Status.COMPLETED,
+        )
+        self.pending_apt = Appointment.objects.create(
+            client=self.owner, doctor=self.doctor, pet=self.pet, service=self.service,
+            date=date.today() + timedelta(days=1), time_slot=time(11, 0),
+            status=Appointment.Status.PENDING,
+        )
+
+    def test_record_without_appointment_is_valid(self):
+        record = MedicalRecord(
+            pet=self.pet, doctor=self.doctor,
+            date=date.today(), diagnosis='standalone',
+        )
+        record.full_clean()
+
+    def test_pet_mismatch_raises(self):
+        record = MedicalRecord(
+            appointment=self.completed_apt,
+            pet=self.other_pet, doctor=self.doctor,
+            date=date.today(), diagnosis='wrong pet',
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            record.full_clean()
+        self.assertIn('pet', ctx.exception.error_dict)
+
+    def test_doctor_mismatch_raises(self):
+        record = MedicalRecord(
+            appointment=self.completed_apt,
+            pet=self.pet, doctor=self.other_doctor,
+            date=date.today(), diagnosis='wrong doctor',
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            record.full_clean()
+        self.assertIn('doctor', ctx.exception.error_dict)
+
+    def test_pending_appointment_rejected(self):
+        record = MedicalRecord(
+            appointment=self.pending_apt,
+            pet=self.pet, doctor=self.doctor,
+            date=date.today(), diagnosis='too early',
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            record.full_clean()
+        self.assertIn('appointment', ctx.exception.error_dict)
+
+
+class AppointmentSlotUniqueTest(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(email='o@test.ru', password='pwd12345')
+        self.other = User.objects.create_user(email='o2@test.ru', password='pwd12345')
+        vet_user = User.objects.create_user(
+            email='v@test.ru', password='pwd12345', role=User.Role.VETERINARIAN,
+        )
+        self.doctor = Doctor.objects.create(user=vet_user, consultation_price=Decimal('1000'))
+        self.pet1 = Pet.objects.create(owner=self.owner, name='A', species='cat', age=12)
+        self.pet2 = Pet.objects.create(owner=self.other, name='B', species='cat', age=12)
+        self.service = Service.objects.create(name='S', price=Decimal('1000'), duration_minutes=30)
+
+    def test_same_slot_different_clients_rejected(self):
+        from django.db import IntegrityError
+        Appointment.objects.create(
+            client=self.owner, doctor=self.doctor, pet=self.pet1, service=self.service,
+            date=date.today() + timedelta(days=1), time_slot=time(10, 0),
+            status=Appointment.Status.CONFIRMED,
+        )
+        with self.assertRaises(IntegrityError):
+            Appointment.objects.create(
+                client=self.other, doctor=self.doctor, pet=self.pet2, service=self.service,
+                date=date.today() + timedelta(days=1), time_slot=time(10, 0),
+                status=Appointment.Status.CONFIRMED,
+            )
+
+    def test_cancelled_slot_does_not_block(self):
+        Appointment.objects.create(
+            client=self.owner, doctor=self.doctor, pet=self.pet1, service=self.service,
+            date=date.today() + timedelta(days=1), time_slot=time(10, 0),
+            status=Appointment.Status.CANCELLED,
+        )
+        Appointment.objects.create(
+            client=self.other, doctor=self.doctor, pet=self.pet2, service=self.service,
+            date=date.today() + timedelta(days=1), time_slot=time(10, 0),
+            status=Appointment.Status.CONFIRMED,
+        )

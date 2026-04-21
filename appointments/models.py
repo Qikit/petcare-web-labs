@@ -1,6 +1,9 @@
+from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
+from django.db.models import Q, UniqueConstraint
 from django.urls import reverse
+from django.utils import timezone
 
 
 class Appointment(models.Model):
@@ -13,25 +16,25 @@ class Appointment(models.Model):
 
     client = models.ForeignKey(
         'users.User', on_delete=models.CASCADE,
-        related_name='appointments', verbose_name='клиент'
+        related_name='appointments', verbose_name='клиент',
     )
     doctor = models.ForeignKey(
         'doctors.Doctor', on_delete=models.CASCADE,
-        related_name='appointments', verbose_name='врач'
+        related_name='appointments', verbose_name='врач',
     )
     pet = models.ForeignKey(
         'pets.Pet', on_delete=models.CASCADE,
-        related_name='appointments', verbose_name='питомец'
+        related_name='appointments', verbose_name='питомец',
     )
     service = models.ForeignKey(
         'services.Service', on_delete=models.CASCADE,
-        related_name='appointments', verbose_name='услуга'
+        related_name='appointments', verbose_name='услуга',
     )
     date = models.DateField('дата приёма')
     time_slot = models.TimeField('время')
     status = models.CharField(
         'статус', max_length=20,
-        choices=Status.choices, default=Status.PENDING
+        choices=Status.choices, default=Status.PENDING,
     )
     comment = models.TextField('комментарий', blank=True)
     cancel_reason = models.TextField('причина отмены', blank=True)
@@ -42,6 +45,13 @@ class Appointment(models.Model):
         verbose_name = 'запись на приём'
         verbose_name_plural = 'записи на приём'
         ordering = ['-date', '-time_slot']
+        constraints = [
+            UniqueConstraint(
+                fields=['doctor', 'date', 'time_slot'],
+                condition=Q(status__in=['pending', 'confirmed', 'in_progress']),
+                name='unique_active_slot_per_doctor',
+            ),
+        ]
 
     def __str__(self):
         return f'Запись #{self.pk} — {self.client} к {self.doctor} ({self.date})'
@@ -54,29 +64,26 @@ class Appointment(models.Model):
 
     def is_upcoming(self):
         from datetime import datetime
-        from django.utils import timezone
-        appointment_dt = datetime.combine(self.date, self.time_slot)
-        return appointment_dt > timezone.now().replace(tzinfo=None) and self.status != self.Status.CANCELLED
-
-    def save(self, *args, **kwargs):
-        if not self.pk and not self.status:
-            self.status = self.Status.PENDING
-        super().save(*args, **kwargs)
+        tz = timezone.get_current_timezone()
+        appointment_dt = datetime.combine(self.date, self.time_slot, tzinfo=tz)
+        return appointment_dt > timezone.now() and self.status != self.Status.CANCELLED
 
 
 class MedicalRecord(models.Model):
-    appointment = models.OneToOneField(
-        Appointment, on_delete=models.CASCADE,
-        related_name='medical_record', verbose_name='запись на приём'
-    )
     pet = models.ForeignKey(
         'pets.Pet', on_delete=models.CASCADE,
-        related_name='medical_records', verbose_name='питомец'
+        related_name='medical_records', verbose_name='питомец',
+    )
+    appointment = models.OneToOneField(
+        Appointment, on_delete=models.SET_NULL,
+        related_name='medical_record', verbose_name='приём',
+        null=True, blank=True,
     )
     doctor = models.ForeignKey(
-        'doctors.Doctor', on_delete=models.CASCADE,
-        related_name='medical_records', verbose_name='врач'
+        'doctors.Doctor', on_delete=models.PROTECT,
+        related_name='medical_records', verbose_name='врач',
     )
+    date = models.DateField('дата записи', default=timezone.now)
     diagnosis = models.TextField('диагноз')
     treatment = models.TextField('лечение', blank=True)
     recommendations = models.TextField('рекомендации', blank=True)
@@ -88,10 +95,23 @@ class MedicalRecord(models.Model):
     created_at = models.DateTimeField('создана', auto_now_add=True)
 
     class Meta:
-        verbose_name = 'медицинская карта'
+        verbose_name = 'запись в медкарте'
         verbose_name_plural = 'медицинские карты'
-        ordering = ['-created_at']
+        ordering = ['-date', '-created_at']
 
     def __str__(self):
-        diag = self.diagnosis[:50] if self.diagnosis else ''
-        return f'Карта #{self.pk} — {self.pet.name} ({diag})'
+        return f'Карта {self.pet.name} от {self.date:%d.%m.%Y}'
+
+    def clean(self):
+        if self.appointment_id is None:
+            return
+        apt = self.appointment
+        errors = {}
+        if self.pet_id != apt.pet_id:
+            errors['pet'] = 'Питомец не совпадает с питомцем в приёме'
+        if self.doctor_id != apt.doctor_id:
+            errors['doctor'] = 'Врач не совпадает с врачом в приёме'
+        if apt.status != Appointment.Status.COMPLETED:
+            errors['appointment'] = 'Медкарту можно создать только для завершённого приёма'
+        if errors:
+            raise ValidationError(errors)
