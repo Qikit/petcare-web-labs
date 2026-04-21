@@ -13,7 +13,8 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
             messages.success(request, 'Вы успешно вошли в систему')
-            return redirect('index')
+            next_url = request.GET.get('next') or request.POST.get('next')
+            return redirect(next_url or 'index')
     else:
         form = LoginForm()
     return render(request, 'auth/login.html', {'form': form})
