@@ -122,7 +122,10 @@
 {% if user.is_authenticated %}
 <div style="text-align:center;margin:30px 0;">
     <a href="{% url 'appointment-create' %}?doctor={{ doctor.pk }}" class="btn btn-primary">Записаться к врачу</a>
-    <a href="{% url 'review-create' doctor_pk=doctor.pk %}" class="btn btn-outline">Оставить отзыв</a>
+    <a href="{% url 'appointment-list' %}" class="btn btn-outline">Оставить отзыв</a>
 </div>
+<p style="text-align:center;color:#666;font-size:0.9em;">
+    Отзыв можно оставить со страницы ваших записей после завершения приёма.
+</p>
 {% endif %}
 {% endblock %}
