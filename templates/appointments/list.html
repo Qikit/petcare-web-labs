@@ -29,13 +29,20 @@
                 <td><span class="status-badge status-{{ apt.status }}">{{ apt.get_status_display }}</span></td>
                 <td>
                     {% if apt.can_cancel %}
-                        <form method="post" action="{% url 'appointment-cancel' apt.pk %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Отменить запись?')">Отменить</button>
-                        </form>
+                        <details>
+                            <summary class="btn btn-ghost btn-sm" style="cursor:pointer;">Отменить</summary>
+                            <form method="post" action="{% url 'appointment-cancel' apt.pk %}" style="margin-top:8px;">
+                                {% csrf_token %}
+                                <textarea name="reason" class="form-control" rows="2" placeholder="Причина отмены (необязательно)"></textarea>
+                                <button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Отменить запись?')">Подтвердить</button>
+                            </form>
+                        </details>
                     {% endif %}
                     {% if apt.status == 'completed' and not apt.review %}
                         <a href="{% url 'review-create' appointment_pk=apt.pk %}" class="btn btn-outline btn-sm">Оставить отзыв</a>
+                    {% endif %}
+                    {% if apt.status == 'cancelled' and apt.cancel_reason %}
+                        <br><small style="color:#888;">Причина: {{ apt.cancel_reason }}</small>
                     {% endif %}
                 </td>
             </tr>

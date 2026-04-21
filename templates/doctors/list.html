@@ -66,4 +66,24 @@
         </div>
     </div>
 </section>
+
+{% get_user_viewed_doctors as viewed_doctors %}
+{% if viewed_doctors %}
+<section class="section">
+    <h2 class="section-title">Вы недавно смотрели</h2>
+    <div class="cards-grid">
+        {% for doctor in viewed_doctors %}
+        <div class="card">
+            {% if doctor.photo %}
+                <img src="{{ doctor.photo.url }}" alt="{{ doctor }}" class="card-img">
+            {% endif %}
+            <div class="card-body">
+                <h3 class="card-title">{{ doctor.user.get_full_name }}</h3>
+                <a href="{{ doctor.get_absolute_url }}" class="btn btn-outline btn-sm">Подробнее</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 {% endblock %}

@@ -19,7 +19,6 @@ class Review(models.Model):
     appointment = models.OneToOneField(
         'appointments.Appointment', on_delete=models.CASCADE,
         related_name='review', verbose_name='запись',
-        blank=True, null=True
     )
     rating = models.PositiveIntegerField(
         'оценка',
