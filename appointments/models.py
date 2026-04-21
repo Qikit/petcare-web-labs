@@ -1,3 +1,4 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 
@@ -81,7 +82,8 @@ class MedicalRecord(models.Model):
     recommendations = models.TextField('рекомендации', blank=True)
     attachment = models.FileField(
         'файл (анализы)', upload_to='medical_records/',
-        blank=True, null=True
+        blank=True, null=True,
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
     )
     created_at = models.DateTimeField('создана', auto_now_add=True)
 

@@ -1,3 +1,4 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 
@@ -11,7 +12,10 @@ class Service(models.Model):
         null=True, blank=True,
         related_name='services', verbose_name='специализация'
     )
-    photo = models.ImageField('фото', upload_to='services/', blank=True, null=True)
+    photo = models.ImageField(
+        'фото', upload_to='services/', blank=True, null=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])],
+    )
     is_active = models.BooleanField('активна', default=True)
 
     class Meta:

@@ -1,4 +1,4 @@
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
 from django.db import models
 from django.urls import reverse
 
@@ -28,7 +28,10 @@ class Pet(models.Model):
         validators=[MinValueValidator(0.01), MaxValueValidator(999.99)]
     )
     health_notes = models.TextField('заметки о здоровье', blank=True)
-    photo = models.ImageField('фото', upload_to='pets/', blank=True, null=True)
+    photo = models.ImageField(
+        'фото', upload_to='pets/', blank=True, null=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])],
+    )
     created_at = models.DateTimeField('добавлен', auto_now_add=True)
 
     class Meta:

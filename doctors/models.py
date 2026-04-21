@@ -1,3 +1,4 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 
@@ -5,7 +6,10 @@ from django.urls import reverse
 class Specialty(models.Model):
     name = models.CharField('название', max_length=100, unique=True)
     description = models.TextField('описание', blank=True)
-    icon = models.ImageField('иконка', upload_to='specialties/', blank=True, null=True)
+    icon = models.ImageField(
+        'иконка', upload_to='specialties/', blank=True, null=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'svg', 'webp'])],
+    )
 
     class Meta:
         verbose_name = 'специализация'
@@ -28,7 +32,10 @@ class Doctor(models.Model):
     experience_years = models.PositiveIntegerField('стаж (лет)', default=0)
     education = models.TextField('образование', blank=True)
     bio = models.TextField('о враче', blank=True)
-    photo = models.ImageField('фото', upload_to='doctors/', blank=True, null=True)
+    photo = models.ImageField(
+        'фото', upload_to='doctors/', blank=True, null=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])],
+    )
     photo_url = models.URLField('ссылка на фото', blank=True)
     consultation_price = models.DecimalField(
         'цена консультации', max_digits=10, decimal_places=2, default=0
@@ -41,7 +48,8 @@ class Doctor(models.Model):
         ordering = ['-experience_years']
 
     def __str__(self):
-        return f'Врач {self.user.get_full_name()}'
+        full_name = self.user.get_full_name().strip()
+        return full_name or self.user.email
 
     def get_absolute_url(self):
         return reverse('doctor-detail', kwargs={'pk': self.pk})
@@ -63,7 +71,7 @@ class DoctorSpecialty(models.Model):
         unique_together = ('doctor', 'specialty')
 
     def __str__(self):
-        return f'{self.doctor} — {self.specialty}'
+        return str(self.specialty)
 
 
 class Schedule(models.Model):
@@ -91,4 +99,4 @@ class Schedule(models.Model):
         ordering = ['day_of_week', 'start_time']
 
     def __str__(self):
-        return f'{self.doctor} — {self.get_day_of_week_display()}'
+        return self.get_day_of_week_display()

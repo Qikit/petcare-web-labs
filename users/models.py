@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 
@@ -15,7 +16,10 @@ class User(AbstractUser):
     email = models.EmailField('электронная почта', unique=True)
     phone = models.CharField('телефон', max_length=20, blank=True)
     role = models.CharField('роль', max_length=20, choices=Role.choices, default=Role.CLIENT)
-    avatar = models.ImageField('аватар', upload_to='avatars/', blank=True, null=True)
+    avatar = models.ImageField(
+        'аватар', upload_to='avatars/', blank=True, null=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])],
+    )
 
     objects = UserManager()
 
