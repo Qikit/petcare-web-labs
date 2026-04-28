@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load petcare_tags %}
 
 {% block title %}Услуги — PetCare{% endblock %}
 
@@ -29,16 +30,32 @@
         </aside>
 
         <div class="content-main">
+            {% if user.is_staff %}
+            <div style="margin-bottom:16px;">
+                <a href="{% url 'service-create' %}" class="btn btn-primary">+ Добавить услугу</a>
+            </div>
+            {% endif %}
+
             <div class="cards-grid">
                 {% for service in page_obj %}
                 <div class="card">
+                    {% service_photo_url service as svc_img %}
+                    <img src="{{ svc_img }}" alt="{{ service.name }}" class="card-img" loading="lazy">
                     <div class="card-body">
-                        <h3 class="card-title">{{ service.name }}</h3>
+                        <h3 class="card-title">
+                            <a href="{% url 'service-detail' service.pk %}">{{ service.name }}</a>
+                        </h3>
                         <p class="card-text">{{ service.description|default:"Описание скоро появится"|truncatewords:20 }}</p>
                         <p class="card-meta">{{ service.duration_minutes }} мин.</p>
                         <p class="card-price">{{ service.price|floatformat:0 }} руб.</p>
                         {% if service.specialty %}
                             <span class="tag">{{ service.specialty.name }}</span>
+                        {% endif %}
+                        {% if user.is_staff %}
+                        <div class="card-actions">
+                            <a href="{% url 'service-edit' service.pk %}" class="btn btn-outline btn-sm">Изменить</a>
+                            <a href="{% url 'service-delete' service.pk %}" class="btn btn-ghost btn-sm">Удалить</a>
+                        </div>
                         {% endif %}
                     </div>
                 </div>

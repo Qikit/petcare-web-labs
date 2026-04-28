@@ -1,12 +1,13 @@
-from django.shortcuts import render
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.views.decorators.cache import cache_page
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.shortcuts import get_object_or_404, redirect, render
 
+from doctors.models import Doctor, Specialty
+from .forms import ServiceForm
 from .models import Service
-from doctors.models import Specialty
 
 
-@cache_page(60 * 15)
 def service_list(request):
     services = Service.objects.filter(
         is_active=True
@@ -36,3 +37,67 @@ def service_list(request):
         'specialties': specialties,
         'search': search,
     })
+
+
+def service_detail(request, pk):
+    service = get_object_or_404(
+        Service.objects.select_related('specialty'),
+        pk=pk,
+    )
+    if service.specialty_id:
+        related_doctors = (
+            Doctor.objects
+            .filter(is_available=True, specialties=service.specialty)
+            .select_related('user')
+        )
+    else:
+        related_doctors = Doctor.objects.none()
+    return render(request, 'services/detail.html', {
+        'service': service,
+        'related_doctors': related_doctors,
+    })
+
+
+@staff_member_required
+def service_create(request):
+    if request.method == 'POST':
+        form = ServiceForm(request.POST, request.FILES)
+        if form.is_valid():
+            service = form.save()
+            messages.success(request, f'Услуга «{service.name}» создана')
+            return redirect('service-detail', pk=service.pk)
+    else:
+        form = ServiceForm()
+    return render(request, 'services/form.html', {
+        'form': form,
+        'title': 'Добавить услугу',
+    })
+
+
+@staff_member_required
+def service_edit(request, pk):
+    service = get_object_or_404(Service, pk=pk)
+    if request.method == 'POST':
+        form = ServiceForm(request.POST, request.FILES, instance=service)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Услуга обновлена')
+            return redirect('service-detail', pk=service.pk)
+    else:
+        form = ServiceForm(instance=service)
+    return render(request, 'services/form.html', {
+        'form': form,
+        'title': f'Редактировать «{service.name}»',
+        'service': service,
+    })
+
+
+@staff_member_required
+def service_delete(request, pk):
+    service = get_object_or_404(Service, pk=pk)
+    if request.method == 'POST':
+        name = service.name
+        service.delete()
+        messages.success(request, f'Услуга «{name}» удалена')
+        return redirect('service-list')
+    return render(request, 'services/confirm_delete.html', {'service': service})

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load petcare_tags %}
+
+{% block title %}{{ service.name }} — PetCare{% endblock %}
+
+{% block content %}
+<section class="hero hero-orange">
+    <div class="hero-content">
+        <h1>{{ service.name }}</h1>
+        {% if service.specialty %}
+            <p>{{ service.specialty.name }}</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section">
+    <div class="detail-grid">
+        <div class="detail-main">
+            {% service_photo_url service as svc_img %}
+            <img src="{{ svc_img }}" alt="{{ service.name }}" class="detail-img" loading="lazy">
+            <h2>Описание</h2>
+            <p>{{ service.description|default:"Описание отсутствует."|linebreaks }}</p>
+
+            <div class="detail-stats">
+                <div class="stat">
+                    <span class="stat-val">{{ service.price|floatformat:0 }}</span>
+                    <span class="stat-label">руб.</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-val">{{ service.duration_minutes }}</span>
+                    <span class="stat-label">мин.</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-val">{% if service.is_active %}Да{% else %}Нет{% endif %}</span>
+                    <span class="stat-label">активна</span>
+                </div>
+            </div>
+
+            {% if user.is_staff %}
+            <div class="detail-actions">
+                <a href="{% url 'service-edit' service.pk %}" class="btn btn-outline">Редактировать</a>
+                <a href="{% url 'service-delete' service.pk %}" class="btn btn-ghost">Удалить</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <aside class="detail-side">
+            <h3>Специалисты</h3>
+            {% if related_doctors %}
+                <ul class="doctors-list">
+                    {% for doctor in related_doctors %}
+                    <li>
+                        <a href="{{ doctor.get_absolute_url }}">{{ doctor.user.get_full_name }}</a>
+                        <small>стаж {{ doctor.experience_years }} лет</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Пока нет привязанных специалистов.</p>
+            {% endif %}
+        </aside>
+    </div>
+</section>
+{% endblock %}
