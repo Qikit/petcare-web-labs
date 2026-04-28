@@ -50,6 +50,7 @@ MIDDLEWARE = [
 
 if DEBUG:
     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    DEBUG_TOOLBAR_CONFIG = {'IS_RUNNING_TESTS': False}
 
 ROOT_URLCONF = 'petcare.urls'
 

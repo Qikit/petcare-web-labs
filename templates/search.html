@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load petcare_tags %}
+
+{% block title %}Поиск{% if query %}: {{ query }}{% endif %} — PetCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <h1>Поиск</h1>
+    <form method="get" action="{% url 'search' %}" class="search-form">
+        <input type="text" name="q" value="{{ query }}" placeholder="Найти..." class="form-control" required>
+        <button type="submit" class="btn btn-primary">Найти</button>
+    </form>
+
+    {% if query %}
+        <p class="search-summary">
+            По запросу «<strong>{{ query }}</strong>» найдено:
+            врачей — {{ doctors|length }},
+            услуг — {{ services|length }},
+            направлений — {{ specialties|length }}.
+        </p>
+
+        {% if doctors %}
+        <h2 class="section-title">Врачи</h2>
+        <div class="cards-grid">
+            {% for doctor in doctors %}
+            <div class="card">
+                {% doctor_photo_url doctor as doc_img %}
+                <img src="{{ doc_img }}" alt="{{ doctor }}" class="card-img" loading="lazy">
+                <div class="card-body">
+                    <h3 class="card-title">{{ doctor.user.get_full_name }}</h3>
+                    <p class="card-text">Стаж: {{ doctor.experience_years }} лет</p>
+                    <a href="{{ doctor.get_absolute_url }}" class="btn btn-outline btn-sm">Подробнее</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if services %}
+        <h2 class="section-title">Услуги</h2>
+        <div class="cards-grid">
+            {% for service in services %}
+            <div class="card">
+                {% service_photo_url service as svc_img %}
+                <img src="{{ svc_img }}" alt="{{ service.name }}" class="card-img" loading="lazy">
+                <div class="card-body">
+                    <h3 class="card-title">{{ service.name }}</h3>
+                    <p class="card-text">{{ service.description|truncatewords:15 }}</p>
+                    <p class="card-price">{{ service.price|floatformat:0 }} руб.</p>
+                    <a href="{% url 'service-detail' service.pk %}" class="btn btn-outline btn-sm">Подробнее</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if specialties %}
+        <h2 class="section-title">Направления</h2>
+        <div class="tags-grid">
+            {% for spec in specialties %}
+            <a href="{% url 'doctor-list' %}?specialty={{ spec.pk }}" class="tag tag-link">{{ spec.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if not doctors and not services and not specialties %}
+        <p class="no-results">Ничего не найдено. Попробуйте другой запрос.</p>
+        {% endif %}
+    {% endif %}
+</section>
+{% endblock %}

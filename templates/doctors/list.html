@@ -44,9 +44,8 @@
             <div class="cards-grid">
                 {% for doctor in page_obj %}
                 <div class="card">
-                    {% if doctor.photo %}
-                        <img src="{{ doctor.photo.url }}" alt="{{ doctor }}" class="card-img">
-                    {% endif %}
+                    {% doctor_photo_url doctor as doc_img %}
+                    <img src="{{ doc_img }}" alt="{{ doctor }}" class="card-img" loading="lazy">
                     <div class="card-body">
                         <h3 class="card-title">{{ doctor.user.get_full_name }}</h3>
                         <p class="card-text">Стаж: {{ doctor.experience_years }} лет</p>
@@ -74,9 +73,8 @@
     <div class="cards-grid">
         {% for doctor in viewed_doctors %}
         <div class="card">
-            {% if doctor.photo %}
-                <img src="{{ doctor.photo.url }}" alt="{{ doctor }}" class="card-img">
-            {% endif %}
+            {% doctor_photo_url doctor as doc_img %}
+            <img src="{{ doc_img }}" alt="{{ doctor }}" class="card-img" loading="lazy">
             <div class="card-body">
                 <h3 class="card-title">{{ doctor.user.get_full_name }}</h3>
                 <a href="{{ doctor.get_absolute_url }}" class="btn btn-outline btn-sm">Подробнее</a>

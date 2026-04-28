@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load petcare_tags %}
 
 {% block title %}Мои питомцы — PetCare{% endblock %}
 
@@ -8,9 +9,8 @@
     <div class="cards-grid">
         {% for pet in pets %}
         <div class="card">
-            {% if pet.photo %}
-                <img src="{{ pet.photo.url }}" alt="{{ pet.name }}" class="card-img">
-            {% endif %}
+            {% pet_photo_url pet as pet_img %}
+            <img src="{{ pet_img }}" alt="{{ pet.name }}" class="card-img" loading="lazy">
             <div class="card-body">
                 <h3 class="card-title">{{ pet.name }}</h3>
                 <p class="card-text">{{ pet.get_species_display }}, {{ pet.breed }}</p>

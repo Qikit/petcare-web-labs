@@ -8,51 +8,138 @@
 <section class="hero hero-teal">
     <div class="hero-content">
         <h1>Забота о вашем питомце — наша работа</h1>
-        <p>Профессиональная ветеринарная помощь в Москве. {% total_doctors %} врачей готовы помочь.</p>
-        <a href="{% url 'doctor-list' %}" class="btn btn-white">Наши врачи</a>
+        <p>Профессиональная ветеринарная помощь в Москве.</p>
+        <form method="get" action="{% url 'search' %}" class="hero-search">
+            <input type="text" name="q" placeholder="Найти врача, услугу, специализацию..." required>
+            <button type="submit" class="btn btn-white">Найти</button>
+        </form>
     </div>
 </section>
 
 <section class="section">
-    <h2 class="section-title">Наши врачи</h2>
+    <div class="stats-grid">
+        <div class="stat-card stat-card--teal">
+            <div class="stat-card__icon"><i class="bi bi-person-badge"></i></div>
+            <div class="stat-card__body">
+                <span class="stat-card__val">{{ stats.doctors_total }}</span>
+                <span class="stat-card__label">врачей</span>
+            </div>
+        </div>
+        <div class="stat-card stat-card--orange">
+            <div class="stat-card__icon"><i class="bi bi-clipboard2-check"></i></div>
+            <div class="stat-card__body">
+                <span class="stat-card__val">{{ stats.services_total }}</span>
+                <span class="stat-card__label">услуг</span>
+            </div>
+        </div>
+        <div class="stat-card stat-card--navy">
+            <div class="stat-card__icon"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-card__body">
+                <span class="stat-card__val">{{ stats.completed_appointments }}</span>
+                <span class="stat-card__label">завершённых приёмов</span>
+            </div>
+        </div>
+        <div class="stat-card stat-card--green">
+            <div class="stat-card__icon"><i class="bi bi-bullseye"></i></div>
+            <div class="stat-card__body">
+                <span class="stat-card__val">{{ stats.specialties_total }}</span>
+                <span class="stat-card__label">направлений</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="widget-head">
+        <h2 class="section-title">Топ врачей по рейтингу</h2>
+        <a href="{% url 'doctor-list' %}" class="widget-link">Все врачи →</a>
+    </div>
     <div class="cards-grid">
-        {% for doctor in doctors %}
+        {% for doctor in top_doctors %}
         <div class="card">
-            {% if doctor.photo %}
-                <img src="{{ doctor.photo.url }}" alt="{{ doctor }}" class="card-img">
-            {% endif %}
+            <span class="rank-badge">{{ forloop.counter }}</span>
+            {% doctor_photo_url doctor as doc_img %}
+            <img src="{{ doc_img }}" alt="{{ doctor }}" class="card-img" loading="lazy">
             <div class="card-body">
                 <h3 class="card-title">{{ doctor.user.get_full_name }}</h3>
                 <p class="card-text">Стаж: {{ doctor.experience_years }} лет</p>
-                <p class="card-text">{{ doctor.bio|truncatewords:15 }}</p>
+                <p class="card-text"><i class="bi bi-star-fill" style="color:var(--orange);"></i> {{ doctor.avg_rating|floatformat:1 }} ({{ doctor.reviews_count }} отзыв.)</p>
+                <p class="card-price">{{ doctor.consultation_price|floatformat:0 }} руб.</p>
                 <a href="{{ doctor.get_absolute_url }}" class="btn btn-outline btn-sm">Подробнее</a>
             </div>
         </div>
         {% empty %}
-        <p>Врачи пока не добавлены.</p>
+        <p>Пока нет врачей с отзывами.</p>
         {% endfor %}
     </div>
 </section>
 
 <section class="section">
-    <h2 class="section-title">Наши услуги</h2>
+    <div class="widget-head">
+        <h2 class="section-title">Популярные услуги</h2>
+        <a href="{% url 'service-list' %}" class="widget-link">Все услуги →</a>
+    </div>
     <div class="cards-grid">
-        {% for service in services %}
+        {% for service in popular_services %}
         <div class="card">
+            <span class="rank-badge">{{ forloop.counter }}</span>
+            {% service_photo_url service as svc_img %}
+            <img src="{{ svc_img }}" alt="{{ service.name }}" class="card-img" loading="lazy">
             <div class="card-body">
-                <h3 class="card-title">{{ service.name }}</h3>
-                <p class="card-text">{{ service.description|truncatewords:12 }}</p>
+                <h3 class="card-title">
+                    <a href="{% url 'service-detail' service.pk %}">{{ service.name }}</a>
+                </h3>
+                <p class="card-text">{{ service.description|truncatewords:15 }}</p>
+                <p class="card-text">{{ service.duration_minutes }} мин · {% if service.popularity %}{{ service.popularity }} записей{% else %}новая услуга{% endif %}</p>
                 <p class="card-price">{{ service.price|floatformat:0 }} руб.</p>
+                {% if service.specialty %}
+                    <span class="tag">{{ service.specialty.name }}</span>
+                {% endif %}
             </div>
         </div>
         {% empty %}
-        <p>Услуги пока не добавлены.</p>
+        <p>Пока нет услуг.</p>
         {% endfor %}
-    </div>
-    <div style="text-align:center;margin-top:20px;">
-        <a href="{% url 'service-list' %}" class="btn btn-outline">Все услуги</a>
     </div>
 </section>
 
-{% show_latest_reviews 3 %}
+<section class="section">
+    <div class="widget-head">
+        <h2 class="section-title">Направления</h2>
+        <a href="{% url 'doctor-list' %}" class="widget-link">К врачам →</a>
+    </div>
+    <div class="specialty-grid">
+        {% for spec in specialties %}
+        <a href="{% url 'doctor-list' %}?specialty={{ spec.pk }}" class="specialty-card">
+            {% spec_icon spec.name as spec_cls %}
+            <div class="specialty-card__icon"><i class="bi {{ spec_cls }}"></i></div>
+            <div class="specialty-card__name">{{ spec.name }}</div>
+            <div class="specialty-card__count">
+                {{ spec.doctors_count }} {% if spec.doctors_count == 1 %}врач{% elif spec.doctors_count < 5 %}врача{% else %}врачей{% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="section">
+    <h2 class="section-title">Свежие отзывы</h2>
+    <div class="reviews-grid">
+        {% for review in latest_reviews %}
+        <div class="review-card">
+            <div class="review-card__header">
+                <span class="review-card__author">{{ review.author.get_full_name|default:review.author.email }}</span>
+                <span class="review-card__rating"><i class="bi bi-star-fill"></i> {{ review.rating }}/5</span>
+            </div>
+            <p class="review-card__text">{{ review.text|truncatewords:25 }}</p>
+            <div class="review-card__date">
+                <a href="{{ review.doctor.get_absolute_url }}">{{ review.doctor.user.get_full_name }}</a>
+                · {{ review.created_at|date:"d E Y" }}
+            </div>
+        </div>
+        {% empty %}
+        <p>Пока нет отзывов.</p>
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}

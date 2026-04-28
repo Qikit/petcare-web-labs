@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from services.models import Service
 from .models import Doctor, Specialty
+from .scheduling import get_available_slots
 
 
 def doctor_list(request):
@@ -73,9 +74,12 @@ def doctor_detail(request, pk):
         viewed.append(doctor.pk)
         request.session['viewed_doctors'] = viewed[-10:]
 
+    available_slots = get_available_slots(doctor, days_ahead=7)[:12]
+
     return render(request, 'doctors/detail.html', {
         'doctor': doctor,
         'stats': stats,
         'reviews': reviews,
         'services': doctor_services,
+        'available_slots': available_slots,
     })

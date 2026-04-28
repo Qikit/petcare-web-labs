@@ -14,9 +14,8 @@
 <section class="section">
     <div class="doctor-info">
         <div class="doctor-photo">
-            {% if doctor.photo %}
-                <img src="{{ doctor.photo.url }}" alt="{{ doctor }}">
-            {% endif %}
+            {% doctor_photo_url doctor as doc_img %}
+            <img src="{{ doc_img }}" alt="{{ doctor }}" loading="lazy">
         </div>
         <div class="doctor-details">
             <div class="doctor-stats">
@@ -79,6 +78,21 @@
             {% endfor %}
         </tbody>
     </table>
+</section>
+{% endif %}
+
+{% if available_slots %}
+<section class="section">
+    <h2 class="section-title">Ближайшие свободные слоты</h2>
+    <p style="color:#666;font-size:14px;">Свободное время на ближайшие 7 дней с учётом расписания и существующих записей.</p>
+    <div class="slots-grid">
+        {% for slot in available_slots %}
+        <div class="slot-chip">
+            <strong>{{ slot.date|date:"d M" }}</strong>
+            <span>{{ slot.time|time:"H:i" }}</span>
+        </div>
+        {% endfor %}
+    </div>
 </section>
 {% endif %}
 
